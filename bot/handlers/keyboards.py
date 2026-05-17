@@ -18,7 +18,7 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("🤖 AI Tools", callback_data="menu_ai_tools"),
-            InlineKeyboardButton("⚡ Daily Drop", callback_data="menu_daily_drop"),
+            InlineKeyboardButton("⚡ Daily Drop", callback_data="menu_drop_settings"),
         ],
         [
             InlineKeyboardButton("📚 Lessons", callback_data="menu_lessons"),
@@ -195,6 +195,25 @@ def channel_keyboard(channel_url: str = "https://t.me/aisystemshub") -> InlineKe
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📡 Join Channel", url=channel_url)],
         [InlineKeyboardButton("← Back", callback_data="menu_main")],
+    ])
+
+
+def daily_drop_settings_keyboard(is_subscribed: bool) -> InlineKeyboardMarkup:
+    if is_subscribed:
+        toggle_btn = InlineKeyboardButton("🔕 Disable Daily Drop", callback_data="drop_unsubscribe")
+    else:
+        toggle_btn = InlineKeyboardButton("🔔 Enable Daily Drop", callback_data="drop_subscribe")
+    return InlineKeyboardMarkup([
+        [toggle_btn],
+        [InlineKeyboardButton("⚡ View Today's Drop", callback_data="menu_daily_drop")],
+        [InlineKeyboardButton("← Main Menu", callback_data="menu_main")],
+    ])
+
+
+def back_to_drop_settings() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("← Daily Drop Settings", callback_data="menu_drop_settings")],
+        [InlineKeyboardButton("← Main Menu", callback_data="menu_main")],
     ])
 
 

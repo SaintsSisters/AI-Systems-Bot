@@ -1,0 +1,82 @@
+Add a controlled scheduled messaging system for the Telegram bot "AI Systems Hub".
+
+IMPORTANT REQUIREMENTS:
+- This is NOT a spam broadcast system.
+- It should only send ONE message per day per user.
+- The feature is called "Daily Drop Scheduler".
+
+==================================================
+FUNCTIONALITY
+==================================================
+
+1. Daily Drop Scheduling:
+- Send one Daily Drop message automatically every day.
+- Default time: 18:00 server time (make configurable in code).
+- Each user receives ONLY ONE message per day.
+
+2. Subscription Control:
+- Users must opt-in to receive Daily Drops.
+- Add a toggle in the bot menu:
+  "Enable Daily Drop / Disable Daily Drop"
+
+3. Storage:
+- Store user preferences in /storage/users.json or /storage/subscribers.json
+- Track:
+  - user_id
+  - subscribed (true/false)
+  - last_sent_date
+
+4. Deduplication Logic:
+- Prevent duplicate sends on the same day.
+- Check last_sent_date before sending.
+
+5. Content System:
+- Daily Drop content should be randomly selected from a predefined list (10–15 items).
+- Each drop should include:
+  - 1 insight about AI systems / automation / content
+  - 1 short actionable idea
+  - 1 soft CTA to explore bot workflows
+
+6. Message Style:
+- Minimal
+- Practical
+- No spam
+- No motivational tone
+- Focus on systems, experiments, and automation insights
+
+==================================================
+TECH IMPLEMENTATION
+==================================================
+
+- Use Python scheduler (APScheduler or asyncio loop)
+- Run background task inside bot process
+- Ensure it does not block main bot functionality
+
+Example structure:
+- services/daily_drop.py
+- storage/subscribers.json
+- utils/scheduler.py
+
+==================================================
+UX REQUIREMENTS
+==================================================
+
+Add in bot menu:
+"Daily Drop Settings"
+
+Options:
+- Enable Daily Drop
+- Disable Daily Drop
+- View today's drop
+
+==================================================
+IMPORTANT BEHAVIOR
+
+- If user unsubscribes → immediately stop sending messages
+- If bot restarts → system must remember subscriptions
+- System must be lightweight (no heavy external services for MVP)
+
+==================================================
+GOAL
+
+This feature should increase retention and make users return daily without feeling spammed.

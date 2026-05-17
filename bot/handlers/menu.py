@@ -20,7 +20,10 @@ from bot.handlers.keyboards import (
     channel_keyboard,
     back_to_main,
     random_workflow_keyboard,
+    daily_drop_settings_keyboard,
+    back_to_drop_settings,
 )
+from bot.services.subscribers import subscribe, unsubscribe, is_subscribed
 from bot.utils.formatting import (
     workflow_card,
     tool_card,
@@ -184,12 +187,56 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             text, parse_mode=ParseMode.MARKDOWN, reply_markup=ai_tools_keyboard()
         )
 
+    elif data == "menu_drop_settings":
+        subscribed = is_subscribed(user_id)
+        status_line = "✅ *Active* — you'll receive a drop at 18:00 UTC daily." if subscribed else "○ *Off* — enable to receive a daily drop at 18:00 UTC."
+        text = (
+            f"⚡ *DAILY DROP SETTINGS*\n\n"
+            f"One practical insight, one action, delivered once per day.\n\n"
+            f"Status: {status_line}\n\n"
+            f"No spam. One message per day. Unsubscribe anytime."
+        )
+        await query.edit_message_text(
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=daily_drop_settings_keyboard(subscribed),
+        )
+
+    elif data == "drop_subscribe":
+        subscribe(user_id)
+        track_usage(user_id, "drop_subscribe")
+        text = (
+            "🔔 *Daily Drop enabled.*\n\n"
+            "You'll receive one drop per day at 18:00 UTC.\n"
+            "One insight. One action. Nothing else.\n\n"
+            "You can disable it here anytime."
+        )
+        await query.edit_message_text(
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=daily_drop_settings_keyboard(True),
+        )
+
+    elif data == "drop_unsubscribe":
+        unsubscribe(user_id)
+        track_usage(user_id, "drop_unsubscribe")
+        text = (
+            "🔕 *Daily Drop disabled.*\n\n"
+            "You won't receive any more scheduled drops.\n"
+            "You can re-enable it here anytime."
+        )
+        await query.edit_message_text(
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=daily_drop_settings_keyboard(False),
+        )
+
     elif data == "menu_daily_drop":
         drop = get_daily_drop()
         await query.edit_message_text(
             daily_drop_card(drop),
             parse_mode=ParseMode.MARKDOWN,
-            reply_markup=back_to_main(),
+            reply_markup=back_to_drop_settings(),
         )
 
     elif data == "menu_lessons":
