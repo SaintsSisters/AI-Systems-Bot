@@ -1,0 +1,237 @@
+REFORM EXISTING PROJECT "AI Systems Hub" INTO AN ACTION-BASED AI TOOL SYSTEM.
+
+CURRENT PROBLEM:
+The bot is currently a knowledge library (educational explanations).
+It must be transformed into an execution engine that generates usable outputs.
+
+==================================================
+CORE TRANSFORMATION RULE
+==================================================
+
+EVERY FEATURE MUST FOLLOW THIS RULE:
+
+❌ DO NOT explain tools
+❌ DO NOT describe concepts
+✅ ALWAYS generate usable outputs
+
+The bot is no longer an encyclopedia.
+It is an AI ACTION ENGINE.
+
+==================================================
+NEW BOT IDENTITY
+==================================================
+
+The bot is now:
+
+"AI Systems Execution Engine"
+
+Purpose:
+Turn user input into:
+- workflows
+- scripts
+- content
+- funnels
+- automation systems
+- ready-to-use assets
+
+==================================================
+GLOBAL UX RULE
+==================================================
+
+Every button must follow this structure:
+
+1. Ask for input (if needed)
+2. Process input via OpenAI
+3. Return actionable output
+4. Provide copy-ready result
+
+No passive text allowed.
+
+==================================================
+TOOLBOX REWRITE (CRITICAL)
+==================================================
+
+Replace ALL Toolbox categories with ACTION TOOLS:
+
+--------------------------------------------------
+
+1. VOICE AI TOOL
+INPUT:
+- topic or script idea
+
+OUTPUT:
+- TikTok voiceover script (15–30 sec)
+- Hook + body + CTA
+- Optimized for retention
+
+--------------------------------------------------
+
+2. VIDEO SCRIPT BUILDER
+INPUT:
+- niche or idea
+
+OUTPUT:
+- full short-form video script
+- hook variations (3)
+- scene breakdown (0–15 sec)
+
+--------------------------------------------------
+
+3. AUTOMATION BUILDER
+INPUT:
+- goal (example: TikTok → Telegram growth)
+
+OUTPUT:
+- step-by-step automation workflow
+- tools needed
+- implementation steps
+
+--------------------------------------------------
+
+4. CONTENT GENERATOR
+INPUT:
+- niche
+
+OUTPUT:
+- 10 TikTok video ideas
+- 10 hooks
+- 5 viral angles
+
+--------------------------------------------------
+
+5. FUNNEL BUILDER
+INPUT:
+- product or niche
+
+OUTPUT:
+- full funnel:
+  TikTok → Telegram → Bot → Conversion flow
+
+--------------------------------------------------
+
+6. POST GENERATOR (Telegram)
+INPUT:
+- topic
+
+OUTPUT:
+- ready-to-publish Telegram post
+- headline + structure + CTA
+
+==================================================
+WORKFLOWS SECTION (REWRITE)
+==================================================
+
+Workflows must NOT be descriptions.
+
+They must become:
+
+- editable templates
+- step-by-step executable systems
+- with placeholders like [NICHE], [PRODUCT], [AUDIENCE]
+
+Example output format:
+
+Title:
+TikTok Growth System
+
+Steps:
+1. Create hook using AI tool
+2. Generate 3 video scripts
+3. Post 2 videos daily
+4. Drive traffic to Telegram bot
+5. Convert using Daily Drop system
+
+==================================================
+TEMPLATES SECTION (REWRITE)
+==================================================
+
+Templates must be:
+
+- copy-paste ready assets
+NOT explanations
+
+Examples:
+- viral hook templates (fill-in-the-blank)
+- CTA templates
+- script templates
+- funnel templates
+
+==================================================
+EXPERIMENTS SECTION (REWRITE)
+==================================================
+
+Must become:
+
+"Live System Results"
+
+Format:
+- What was tested
+- What was generated (assets, not text explanation)
+- Result (numbers if available)
+- Insight (1 sentence only)
+
+==================================================
+LESSONS SECTION (REWRITE)
+==================================================
+
+Must become:
+
+"Failure → Fix Systems"
+
+Each lesson must include:
+- what failed
+- what to change in system
+- updated template or rule
+
+==================================================
+DAILY DROP (KEEP BUT UPGRADE)
+
+Daily Drop must now output:
+
+- 1 actionable system
+- 1 prompt/template
+- 1 immediate action step
+
+No motivational content allowed.
+
+==================================================
+CRITICAL UX RULE
+
+Bot must feel like:
+
+"You give input → you receive a working system"
+
+NOT:
+
+"You read information"
+
+==================================================
+NAVIGATION RULE
+
+Every section must:
+- ask for input OR
+- generate output immediately
+
+No static text screens allowed.
+
+==================================================
+SUCCESS METRIC
+
+Bot success is measured by:
+
+- how often users copy outputs
+- how often they generate assets
+- how often they return to reuse tools
+
+NOT by reading time.
+
+==================================================
+FINAL GOAL
+
+Transform AI Systems Hub from:
+
+"knowledge library bot"
+
+TO:
+
+"AI execution engine for content, automation and growth systems"
