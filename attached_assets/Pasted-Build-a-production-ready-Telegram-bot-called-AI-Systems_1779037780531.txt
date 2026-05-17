@@ -1,0 +1,344 @@
+Build a production-ready Telegram bot called “AI Systems Hub”.
+
+The bot is NOT a generic AI chatbot.
+
+It should feel like an interactive operating system for:
+- AI workflows
+- Telegram systems
+- digital automation
+- content pipelines
+- growth experiments
+- traffic funnels
+
+The goal is to create a Telegram-native ecosystem that supports a content/media channel.
+
+==================================================
+TECH STACK
+==================================================
+
+Use:
+- Python 3
+- python-telegram-bot (latest stable version)
+- OpenAI API
+- dotenv
+- lightweight local JSON storage for MVP
+- modular architecture
+
+No database required for MVP.
+
+==================================================
+BOT CONCEPT
+==================================================
+
+The bot should feel:
+- fast
+- clean
+- modern
+- minimal
+- useful
+- interactive
+
+It should NOT feel like:
+- a generic ChatGPT wrapper
+- a spammy AI tool
+- a low-quality prompt generator
+
+The experience should feel like:
+“a digital systems operating hub”.
+
+==================================================
+MAIN MENU
+==================================================
+
+Use inline keyboard buttons.
+
+Main menu sections:
+
+1. Workflows
+2. Toolbox
+3. Templates
+4. Experiments
+5. AI Tools
+6. Daily Drop
+7. Lessons
+8. Premium
+9. Channel
+
+==================================================
+1. WORKFLOWS SECTION
+==================================================
+
+Purpose:
+Provide ready-to-use digital system blueprints.
+
+Each workflow should include:
+- title
+- short explanation
+- steps
+- recommended tools
+- traffic source
+- monetization idea
+
+Include example workflows such as:
+
+- TikTok → Telegram Funnel
+- AI Content Pipeline
+- Telegram Growth Workflow
+- AI Automation Setup
+- Faceless Content System
+- Short-form Content Engine
+
+Format responses clearly with:
+- headings
+- emojis
+- bullet points
+
+==================================================
+2. TOOLBOX SECTION
+==================================================
+
+Purpose:
+Curated collection of useful AI and automation tools.
+
+Categories:
+- AI Writing
+- Video Editing
+- Automation
+- Telegram
+- Analytics
+- Design
+- Voice AI
+
+Each tool entry must include:
+- what it does
+- why it matters
+- how creators use it
+
+Include real tools such as:
+- ChatGPT
+- CapCut
+- n8n
+- Canva
+- ElevenLabs
+- Notion
+- Zapier
+
+Allow pagination or category navigation.
+
+==================================================
+3. TEMPLATES SECTION
+==================================================
+
+Purpose:
+Give users reusable structures.
+
+Include:
+- Hook templates
+- CTA templates
+- Telegram post structures
+- TikTok/Reels structures
+- Funnel structures
+- Viral opening patterns
+
+Each template should be concise and practical.
+
+==================================================
+4. EXPERIMENTS SECTION
+==================================================
+
+Purpose:
+Document real growth/content experiments.
+
+This section should simulate “building in public”.
+
+Example experiment entries:
+- Testing TikTok hooks
+- Retention analysis
+- Funnel conversion tests
+- CTA experiments
+- Posting frequency tests
+
+Each experiment includes:
+- hypothesis
+- what was tested
+- result
+- conclusion
+
+==================================================
+5. AI TOOLS SECTION
+==================================================
+
+Purpose:
+Mini AI utilities.
+
+Include:
+
+A) Hook Generator
+User inputs:
+- niche
+- audience
+
+Output:
+- 10 hooks
+
+B) CTA Generator
+User inputs:
+- platform
+- goal
+
+Output:
+- 10 CTA ideas
+
+C) Video Idea Generator
+User inputs:
+- niche
+
+Output:
+- 10 short-form content ideas
+
+D) Funnel Idea Generator
+User inputs:
+- product or niche
+
+Output:
+- simple traffic funnel idea
+
+All outputs should feel practical and modern.
+
+==================================================
+6. DAILY DROP SECTION
+==================================================
+
+Purpose:
+Retention mechanic.
+
+Generate daily rotating content such as:
+- workflow ideas
+- automation tricks
+- AI tools
+- growth tips
+- content systems
+
+Daily drops should feel short and high-value.
+
+Add:
+“Come back tomorrow for another drop.”
+
+==================================================
+7. LESSONS SECTION
+==================================================
+
+Purpose:
+Show failures and practical lessons.
+
+Examples:
+- Why this video failed
+- Retention dropped after 3 seconds
+- Weak CTA examples
+- Bad hooks vs good hooks
+
+This section should feel honest and practical.
+
+==================================================
+8. PREMIUM SECTION
+==================================================
+
+Purpose:
+Soft monetization.
+
+Display:
+- premium workflows
+- advanced templates
+- advanced funnel systems
+- private automation packs
+
+Use elegant upgrade messaging.
+
+Do NOT integrate payments yet.
+Only create placeholder upgrade flow.
+
+==================================================
+9. CHANNEL SECTION
+==================================================
+
+Purpose:
+Drive users back to Telegram channel.
+
+Include:
+- channel description
+- join button
+- latest updates teaser
+
+==================================================
+UX REQUIREMENTS
+==================================================
+
+The UX must:
+- feel fast
+- avoid long paragraphs
+- use structured formatting
+- support back buttons
+- support navigation menus
+- avoid clutter
+
+==================================================
+AI STYLE REQUIREMENTS
+==================================================
+
+AI-generated outputs must:
+- sound modern
+- sound tactical
+- avoid generic motivational language
+- avoid “guru” style
+- focus on systems and execution
+
+==================================================
+ARCHITECTURE
+==================================================
+
+Project structure:
+
+/main.py
+/handlers/
+/services/
+/data/
+/utils/
+/prompts/
+/storage/
+
+Separate:
+- AI logic
+- menu logic
+- formatting
+- content data
+
+==================================================
+EXTRA FEATURES
+==================================================
+
+Add:
+- lightweight usage tracking
+- random workflow suggestions
+- “recommended next action”
+- rotating featured tool
+- rotating featured workflow
+
+==================================================
+IMPORTANT
+==================================================
+
+The bot should feel like:
+a modern digital systems companion for creators, marketers, Telegram builders, and automation enthusiasts.
+
+The project must be scalable later into:
+- SaaS
+- mini app
+- subscription system
+- community ecosystem
+
+Focus heavily on:
+- clean UX
+- usefulness
+- retention
+- ecosystem feeling
+- practical value
