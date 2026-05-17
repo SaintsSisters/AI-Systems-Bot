@@ -1,8 +1,8 @@
 """
-All AI tool logic.
-No ConversationHandlers — state is persisted in bot/storage/user_state.json.
-Entry points set state; the global message router dispatches here.
+AI tool logic — state-based routing, no ConversationHandlers.
+All errors are logged with full traceback. Nothing is silently swallowed.
 """
+import logging
 from telegram import Update, Message
 from telegram.constants import ParseMode
 
@@ -18,26 +18,39 @@ from bot.services.action_service import (
 from bot.handlers.keyboards import tool_result_keyboard, ai_tool_result_keyboard, workflow_customized_keyboard
 from bot.data.action_workflows import ACTION_WORKFLOWS
 
+logger = logging.getLogger(__name__)
 
-# ── Helpers ────────────────────────────────────────────────────────────────
+ERROR_RU = "❌ Ошибка генерации. Попробуйте ещё раз или выберите другой инструмент."
+ERROR_EN = "❌ Generation error. Please try again or choose another tool."
 
-async def _thinking(message: Message, key: str, lang: str) -> Message:
+
+def _error_text(lang: str) -> str:
+    return ERROR_RU if lang == "ru" else ERROR_EN
+
+
+# ── Safe "thinking" message ────────────────────────────────────────────────
+
+async def _send_thinking(message: Message, key: str, lang: str) -> Message:
     return await message.reply_text(t(key, lang))
 
 
-async def _safe_error(message: Message, lang: str) -> None:
-    await message.reply_text(t("error_msg", lang))
+async def _try_delete(msg: Message) -> None:
+    """Delete a message, ignoring errors (already deleted, etc.)."""
+    try:
+        await msg.delete()
+    except Exception:
+        pass
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ENTRY POINTS — called from menu.handle_callback when a tool button is tapped
-# Each sets state and sends the input-prompt message.
+# ENTRY POINTS — save state to disk and ask for user input
 # ══════════════════════════════════════════════════════════════════════════
 
 async def enter_voice(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "voice", True)
+    logger.info("User %d entered tool: voice", query.from_user.id)
     await query.edit_message_text(t("voice_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -45,6 +58,7 @@ async def enter_video(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "video", True)
+    logger.info("User %d entered tool: video", query.from_user.id)
     await query.edit_message_text(t("video_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -52,6 +66,7 @@ async def enter_automation(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "automation", True)
+    logger.info("User %d entered tool: automation", query.from_user.id)
     await query.edit_message_text(t("automation_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -59,6 +74,7 @@ async def enter_content(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "content", True)
+    logger.info("User %d entered tool: content", query.from_user.id)
     await query.edit_message_text(t("content_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -66,6 +82,7 @@ async def enter_funnel(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "funnel", True)
+    logger.info("User %d entered tool: funnel", query.from_user.id)
     await query.edit_message_text(t("funnel_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -73,6 +90,7 @@ async def enter_post(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "post", True)
+    logger.info("User %d entered tool: post", query.from_user.id)
     await query.edit_message_text(t("post_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -80,6 +98,7 @@ async def enter_wf_customize(update: Update, wf_index: int) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "wf_customize", True, extra={"wf_index": wf_index})
+    logger.info("User %d entered tool: wf_customize (index=%d)", query.from_user.id, wf_index)
     await query.edit_message_text(t("customize_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -87,6 +106,7 @@ async def enter_hooks(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "hooks", True, step=1)
+    logger.info("User %d entered tool: hooks step 1", query.from_user.id)
     await query.edit_message_text(t("hook_ask1", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -94,6 +114,7 @@ async def enter_ctas(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "ctas", True, step=1)
+    logger.info("User %d entered tool: ctas step 1", query.from_user.id)
     await query.edit_message_text(t("cta_ask1", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -101,6 +122,7 @@ async def enter_video_ideas(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "video_ideas", True)
+    logger.info("User %d entered tool: video_ideas", query.from_user.id)
     await query.edit_message_text(t("videoidea_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -108,254 +130,296 @@ async def enter_funnel_ideas(update: Update) -> None:
     query = update.callback_query
     lang = get_lang(query.from_user.id)
     set_state(query.from_user.id, "funnel_ideas", True)
+    logger.info("User %d entered tool: funnel_ideas", query.from_user.id)
     await query.edit_message_text(t("funnelidea_ask", lang), parse_mode=ParseMode.MARKDOWN)
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# MESSAGE HANDLERS — called by the global router with user's text input
-# Each generates AI output and resets state.
+# AI GENERATION HANDLERS — each calls OpenAI, logs result, resets state
 # ══════════════════════════════════════════════════════════════════════════
 
 async def handle_voice(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_voice")
-    msg = await _thinking(update.message, "voice_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_voice")
+    thinking = await _send_thinking(update.message, "voice_thinking", lang)
     try:
         result = await gen_voice_script(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("voice_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_voice", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: voice script delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: voice script FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_video(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_video")
-    msg = await _thinking(update.message, "video_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_video")
+    thinking = await _send_thinking(update.message, "video_thinking", lang)
     try:
         result = await gen_video_script(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("video_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_video", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: video script delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: video script FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_automation(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_automation")
-    msg = await _thinking(update.message, "automation_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_automation")
+    thinking = await _send_thinking(update.message, "automation_thinking", lang)
     try:
         result = await gen_automation(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("automation_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_automation", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: automation delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: automation FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_content(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_content")
-    msg = await _thinking(update.message, "content_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_content")
+    thinking = await _send_thinking(update.message, "content_thinking", lang)
     try:
         result = await gen_content_pack(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("content_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_content", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: content pack delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: content pack FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_funnel(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_funnel")
-    msg = await _thinking(update.message, "funnel_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_funnel")
+    thinking = await _send_thinking(update.message, "funnel_thinking", lang)
     try:
         result = await gen_funnel(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("funnel_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_funnel", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: funnel delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: funnel FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_post(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "tool_post")
-    msg = await _thinking(update.message, "post_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "tool_post")
+    thinking = await _send_thinking(update.message, "post_thinking", lang)
     try:
         result = await gen_telegram_post(update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("post_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=tool_result_keyboard("tool_post", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: telegram post delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: telegram post FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 async def handle_wf_customize(update: Update, state: dict) -> None:
-    lang = get_lang(update.effective_user.id)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
     wf_index = state.get("data", {}).get("wf_index", 0)
     wf = ACTION_WORKFLOWS[wf_index]
     wf_name = wf["title_ru"] if lang == "ru" else wf["title_en"]
-    msg = await update.message.reply_text(t("customize_thinking", lang))
+    thinking = await update.message.reply_text(t("customize_thinking", lang))
     try:
         result = await gen_workflow_customized(wf_name, update.message.text, lang)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             f"⚙️ *{wf_name}*\n\n{result}",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=workflow_customized_keyboard(lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: workflow customize delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: wf_customize FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 # ── Multi-step: Hooks ──────────────────────────────────────────────────────
 
 async def handle_hooks(update: Update, state: dict) -> None:
-    lang = get_lang(update.effective_user.id)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
     step = state.get("step", 1)
 
     if step == 1:
-        store_data(update.effective_user.id, "niche", update.message.text)
-        advance_step(update.effective_user.id)
+        store_data(user_id, "niche", update.message.text)
+        advance_step(user_id)
+        logger.info("User %d: hooks step 1 done, niche saved, asking step 2.", user_id)
         await update.message.reply_text(t("hook_ask2", lang), parse_mode=ParseMode.MARKDOWN)
+        return
 
-    elif step == 2:
-        niche = state.get("data", {}).get("niche", "")
-        track_usage(update.effective_user.id, "hook_generator")
-        msg = await _thinking(update.message, "hook_thinking", lang)
-        try:
-            result = await generate_hooks(niche, update.message.text)
-            await msg.delete()
-            await update.message.reply_text(
-                t("hook_result_header", lang) + result,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=ai_tool_result_keyboard("aitool_hooks", lang),
-            )
-        except Exception:
-            await msg.delete()
-            await _safe_error(update.message, lang)
-        finally:
-            reset_state(update.effective_user.id)
+    # step 2 — generate
+    niche = state.get("data", {}).get("niche", "")
+    audience = update.message.text
+    track_usage(user_id, "hook_generator")
+    logger.info("User %d: hooks generating (niche=%s, audience=%s).", user_id, niche, audience)
+    thinking = await _send_thinking(update.message, "hook_thinking", lang)
+    try:
+        result = await generate_hooks(niche, audience)
+        await _try_delete(thinking)
+        await update.message.reply_text(
+            t("hook_result_header", lang) + result,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=ai_tool_result_keyboard("aitool_hooks", lang),
+        )
+        logger.info("User %d: hooks delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: hooks FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
+    finally:
+        reset_state(user_id)
 
 
 # ── Multi-step: CTAs ───────────────────────────────────────────────────────
 
 async def handle_ctas(update: Update, state: dict) -> None:
-    lang = get_lang(update.effective_user.id)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
     step = state.get("step", 1)
 
     if step == 1:
-        store_data(update.effective_user.id, "platform", update.message.text)
-        advance_step(update.effective_user.id)
+        store_data(user_id, "platform", update.message.text)
+        advance_step(user_id)
+        logger.info("User %d: ctas step 1 done, platform saved, asking step 2.", user_id)
         await update.message.reply_text(t("cta_ask2", lang), parse_mode=ParseMode.MARKDOWN)
+        return
 
-    elif step == 2:
-        platform = state.get("data", {}).get("platform", "")
-        track_usage(update.effective_user.id, "cta_generator")
-        msg = await _thinking(update.message, "cta_thinking", lang)
-        try:
-            result = await generate_ctas(platform, update.message.text)
-            await msg.delete()
-            await update.message.reply_text(
-                t("cta_result_header", lang) + result,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=ai_tool_result_keyboard("aitool_ctas", lang),
-            )
-        except Exception:
-            await msg.delete()
-            await _safe_error(update.message, lang)
-        finally:
-            reset_state(update.effective_user.id)
+    # step 2 — generate
+    platform = state.get("data", {}).get("platform", "")
+    goal = update.message.text
+    track_usage(user_id, "cta_generator")
+    logger.info("User %d: ctas generating (platform=%s, goal=%s).", user_id, platform, goal)
+    thinking = await _send_thinking(update.message, "cta_thinking", lang)
+    try:
+        result = await generate_ctas(platform, goal)
+        await _try_delete(thinking)
+        await update.message.reply_text(
+            t("cta_result_header", lang) + result,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=ai_tool_result_keyboard("aitool_ctas", lang),
+        )
+        logger.info("User %d: ctas delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: ctas FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
+    finally:
+        reset_state(user_id)
 
 
 # ── Single-step: Video Ideas ───────────────────────────────────────────────
 
 async def handle_video_ideas(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "video_generator")
-    msg = await _thinking(update.message, "videoidea_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "video_generator")
+    logger.info("User %d: video_ideas generating.", user_id)
+    thinking = await _send_thinking(update.message, "videoidea_thinking", lang)
     try:
         result = await generate_video_ideas(update.message.text)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("videoidea_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=ai_tool_result_keyboard("aitool_videos", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: video_ideas delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: video_ideas FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 # ── Single-step: Funnel Ideas ──────────────────────────────────────────────
 
 async def handle_funnel_ideas(update: Update) -> None:
-    lang = get_lang(update.effective_user.id)
-    track_usage(update.effective_user.id, "funnel_generator")
-    msg = await _thinking(update.message, "funnelidea_thinking", lang)
+    user_id = update.effective_user.id
+    lang = get_lang(user_id)
+    track_usage(user_id, "funnel_generator")
+    logger.info("User %d: funnel_ideas generating.", user_id)
+    thinking = await _send_thinking(update.message, "funnelidea_thinking", lang)
     try:
         result = await generate_funnel_idea(update.message.text)
-        await msg.delete()
+        await _try_delete(thinking)
         await update.message.reply_text(
             t("funnelidea_result_header", lang) + result,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=ai_tool_result_keyboard("aitool_funnel", lang),
         )
-    except Exception:
-        await msg.delete()
-        await _safe_error(update.message, lang)
+        logger.info("User %d: funnel_ideas delivered.", user_id)
+    except Exception as e:
+        logger.error("User %d: funnel_ideas FAILED — %s", user_id, e, exc_info=True)
+        await _try_delete(thinking)
+        await update.message.reply_text(_error_text(lang))
     finally:
-        reset_state(update.effective_user.id)
+        reset_state(user_id)
 
 
 # ══════════════════════════════════════════════════════════════════════════
 # GLOBAL MESSAGE ROUTER
-# Called from main.py for every non-command text message.
 # ══════════════════════════════════════════════════════════════════════════
 
 TOOL_DISPATCH = {
@@ -377,13 +441,19 @@ MULTI_STEP_DISPATCH = {
 
 
 async def route_message(update: Update, _) -> None:
-    """Global text-message router — checks persisted state and dispatches."""
+    """Reads persisted state and dispatches text to the correct tool handler."""
     user_id = update.effective_user.id
     lang = get_lang(user_id)
     state = get_state(user_id)
+    tool = state.get("active_tool")
+    awaiting = state.get("awaiting_input", False)
 
-    if not state.get("awaiting_input"):
-        # No active tool — show friendly nudge
+    logger.info(
+        "route_message: user=%d awaiting=%s tool=%s text=%r",
+        user_id, awaiting, tool, update.message.text[:60] if update.message.text else "",
+    )
+
+    if not awaiting or not tool:
         nudge = (
             "Выбери инструмент через меню или нажми /start"
             if lang == "ru"
@@ -392,23 +462,19 @@ async def route_message(update: Update, _) -> None:
         await update.message.reply_text(nudge)
         return
 
-    tool = state.get("active_tool")
-
-    # Single-step tools
     if tool in TOOL_DISPATCH:
         await TOOL_DISPATCH[tool](update)
         return
 
-    # Multi-step tools (need state passed in)
     if tool in MULTI_STEP_DISPATCH:
         await MULTI_STEP_DISPATCH[tool](update, state)
         return
 
-    # Unknown tool — safe reset
+    # Unknown tool name in state — safe recovery
+    logger.warning("route_message: unknown tool=%s for user=%d — resetting state.", tool, user_id)
     reset_state(user_id)
-    nudge = (
-        "Что-то пошло не так. Выбери инструмент через /start"
+    await update.message.reply_text(
+        "Что-то пошло не так. Нажми /start чтобы вернуться в меню."
         if lang == "ru"
-        else "Something went wrong. Choose a tool via /start"
+        else "Something went wrong. Press /start to return to the menu."
     )
-    await update.message.reply_text(nudge)

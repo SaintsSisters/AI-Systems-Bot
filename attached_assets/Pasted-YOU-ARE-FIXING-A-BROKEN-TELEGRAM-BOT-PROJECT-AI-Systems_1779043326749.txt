@@ -1,0 +1,141 @@
+YOU ARE FIXING A BROKEN TELEGRAM BOT PROJECT (AI Systems Hub).
+
+GOAL: Restore full working functionality of ALL buttons and AI tools.
+
+DO NOT add new features.
+DO NOT redesign UX.
+ONLY FIX EXECUTION, ROUTING, AND AI GENERATION.
+
+==================================================
+CRITICAL SYMPTOMS TO FIX
+==================================================
+
+- AI tools (Hook generator, Funnel, Video script, etc.) return "something went wrong"
+- Buttons respond but produce no output
+- Some tools hang after user input
+- Execution layer (OpenAI calls) is broken or not triggered
+- State system exists but does not lead to AI response
+- Errors are hidden instead of shown
+
+==================================================
+MANDATORY FIXES
+==================================================
+
+1. FORCE AI EXECUTION LAYER TO WORK
+
+Ensure EVERY AI tool does the following:
+
+STEP A:
+Receive user input correctly
+
+STEP B:
+Pass input into OpenAI API call (async, awaited)
+
+STEP C:
+Return response to user
+
+If any step fails → log real error and show fallback message.
+
+==================================================
+2. REMOVE SILENT FAILURES (CRITICAL)
+
+DO NOT use empty try/except blocks.
+
+Replace all with:
+
+try:
+    ...
+except Exception as e:
+    log error to console
+    send user message:
+    "Ошибка генерации. Попробуйте ещё раз."
+
+==================================================
+3. FIX ROUTING LOGIC
+
+Ensure ALL tools follow this pattern:
+
+IF user.active_tool == "funnel":
+    call funnel_generator(input)
+
+IF user.active_tool == "hook":
+    call hook_generator(input)
+
+IF user.active_tool == "video":
+    call video_generator(input)
+
+IF user.active_tool == "automation":
+    call automation_generator(input)
+
+NO INPUT SHOULD BE IGNORED.
+
+==================================================
+4. FIX STATE FLOW
+
+On tool click:
+- set user.active_tool = tool_name
+- set user.awaiting_input = true
+- persist to disk immediately
+
+On user message:
+IF user.awaiting_input == true:
+    route to active_tool
+    AFTER response:
+        reset awaiting_input = false
+        active_tool = null
+
+==================================================
+5. OPENAI API GUARANTEE FIX
+
+Ensure:
+
+- OPENAI_API_KEY is loaded correctly from environment
+- API client is initialized once globally
+- Every tool uses SAME working OpenAI client
+- No duplicate or broken clients
+
+Add debug log:
+
+"OpenAI request sent"
+"OpenAI response received"
+
+==================================================
+6. LANGUAGE SYSTEM MUST NOT BREAK EXECUTION
+
+- language selection must NOT affect tool execution
+- language only affects output text formatting
+- NEVER block AI generation due to language state
+
+==================================================
+7. HARD FAIL SAFETY RULE
+
+If anything fails:
+
+RETURN ALWAYS:
+"Ошибка генерации. Попробуйте ещё раз или выберите другой инструмент."
+
+NEVER return empty response.
+
+==================================================
+8. BOT HEALTH CHECK (IMPORTANT)
+
+On startup:
+
+- verify OpenAI key exists
+- verify router is active
+- verify state file exists or create it
+- print "BOT READY" in logs
+
+==================================================
+FINAL GOAL
+
+After this fix:
+
+- ALL buttons must produce real AI output
+- Funnel tool must generate structured funnel
+- Hook tool must generate hooks
+- Video script must generate scripts
+- No silent failures allowed
+- No infinite waiting states
+
+THIS IS A STABILITY RECOVERY PATCH, NOT A FEATURE UPDATE.
