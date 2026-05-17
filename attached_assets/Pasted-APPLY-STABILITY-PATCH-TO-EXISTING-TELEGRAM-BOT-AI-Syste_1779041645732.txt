@@ -1,0 +1,132 @@
+APPLY STABILITY PATCH TO EXISTING TELEGRAM BOT "AI Systems Hub".
+
+DO NOT REWRITE THE BOT.
+DO NOT CHANGE UI STRUCTURE.
+ONLY FIX LOGIC, STATE MANAGEMENT, AND ROUTING.
+
+==================================================
+CRITICAL PROBLEMS TO FIX
+==================================================
+
+1. Bot loses user state after restart
+2. Input-based tools (e.g. Funnel, Automation) hang or do nothing
+3. Language resets to English after restart
+4. Bot sometimes falls back to informational mode
+5. Callback buttons do not correctly continue flows
+
+==================================================
+SOLUTION: ADD GLOBAL STATE ENGINE
+==================================================
+
+Implement persistent state layer:
+
+Create or improve:
+bot/storage/user_state.json
+
+Structure:
+{
+  "user_id": {
+    "language": "ru",
+    "current_flow": null,
+    "awaiting_input": false,
+    "active_tool": null
+  }
+}
+
+==================================================
+STATE RULES
+==================================================
+
+WHEN user clicks ANY tool button (e.g. Funnel, Voice AI, Automation):
+
+SET:
+- active_tool = tool_name
+- awaiting_input = true
+- current_flow = tool_name
+
+Example:
+user clicks "Funnel":
+→ active_tool = "funnel"
+→ awaiting_input = true
+
+==================================================
+INPUT HANDLING FIX
+==================================================
+
+When user sends a message:
+
+IF awaiting_input == true:
+    route message to active_tool handler
+    generate AI output based on tool
+    reset:
+        awaiting_input = false
+        active_tool = null
+        current_flow = null
+
+ELSE:
+    process as normal chat or menu navigation
+
+==================================================
+LANGUAGE FIX (CRITICAL)
+==================================================
+
+On EVERY update and restart:
+
+IF user.language NOT EXISTS:
+    set user.language = "ru"
+
+NEVER default to English unless explicitly selected.
+
+Language must be loaded from:
+bot/storage/users.json
+
+==================================================
+ROUTER FIX
+==================================================
+
+Ensure all tool callbacks are mapped correctly:
+
+- Funnel → funnel_handler
+- Voice AI → voice_handler
+- Automation → automation_handler
+- Video Script → video_handler
+- Content Pack → content_handler
+- Telegram Post → post_handler
+
+If callback received:
+→ DO NOT ignore it
+→ ALWAYS set state + ask input OR process immediately
+
+==================================================
+FALLBACK MODE REMOVAL FIX
+==================================================
+
+REMOVE behavior where bot:
+- sends generic informational text when it does not understand input
+- switches to old "library mode"
+
+Instead:
+IF unknown input:
+    respond:
+    "Выбери инструмент через меню или /start"
+
+==================================================
+CRASH PREVENTION
+==================================================
+
+If any tool fails:
+- do NOT crash bot
+- reset user state safely
+- return user to main menu
+
+==================================================
+GOAL OF PATCH
+==================================================
+
+After this fix:
+
+- Funnel tool will ALWAYS respond
+- No more "hanging" after input
+- Language persists after restart
+- Bot never switches to informational fallback mode
+- All tools behave like real execution actions

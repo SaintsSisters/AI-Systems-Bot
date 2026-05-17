@@ -1,10 +1,10 @@
-import random
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.i18n import t
 from bot.utils.lang import get_lang, toggle_lang
+from bot.utils.state import reset_state
 from bot.utils.storage import track_usage
 from bot.services.subscribers import subscribe, unsubscribe, is_subscribed
 from bot.data.action_workflows import ACTION_WORKFLOWS
@@ -34,6 +34,13 @@ from bot.handlers.keyboards import (
     channel_keyboard,
 )
 
+# Import tool entry-points (no ConversationHandlers needed)
+from bot.handlers.ai_tools import (
+    enter_voice, enter_video, enter_automation, enter_content,
+    enter_funnel, enter_post, enter_wf_customize,
+    enter_hooks, enter_ctas, enter_video_ideas, enter_funnel_ideas,
+)
+
 
 def _daily_drop_text(drop: dict, lang: str) -> str:
     system = drop["system_ru"] if lang == "ru" else drop["system_en"]
@@ -41,12 +48,15 @@ def _daily_drop_text(drop: dict, lang: str) -> str:
     action = drop["action_ru"] if lang == "ru" else drop["action_en"]
     divider = "─" * 26
     footer = "_Возвращайся завтра за следующим дропом._" if lang == "ru" else "_Come back tomorrow for the next drop._"
+    s_label = "Система" if lang == "ru" else "System"
+    p_label = "Промпт" if lang == "ru" else "Prompt"
+    a_label = "Действие" if lang == "ru" else "Action"
     return (
-        f"⚡ *{'DAILY DROP' if lang == 'en' else 'DAILY DROP'}*\n"
+        f"⚡ *DAILY DROP*\n"
         f"{divider}\n\n"
-        f"🔧 *{'Система' if lang == 'ru' else 'System'}:* {system}\n\n"
-        f"📋 *{'Промпт' if lang == 'ru' else 'Prompt'}:*\n{prompt}\n\n"
-        f"🎯 *{'Действие' if lang == 'ru' else 'Action'}:*\n{action}\n\n"
+        f"🔧 *{s_label}:* {system}\n\n"
+        f"📋 *{p_label}:*\n{prompt}\n\n"
+        f"🎯 *{a_label}:*\n{action}\n\n"
         f"{divider}\n{footer}"
     )
 
@@ -54,6 +64,7 @@ def _daily_drop_text(drop: dict, lang: str) -> str:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     track_usage(user.id, "start")
+    reset_state(user.id)           # always clear any hanging state on /start
     lang = get_lang(user.id)
     await update.message.reply_text(
         t("welcome", lang),
@@ -72,6 +83,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── LANGUAGE TOGGLE ───────────────────────────────────────────────────
     if data == "toggle_lang":
+        reset_state(user_id)
         new_lang = toggle_lang(user_id)
         confirm = t("lang_changed_en", new_lang) if new_lang == "en" else t("lang_changed_ru", new_lang)
         await query.edit_message_text(
@@ -82,6 +94,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── MAIN MENU ─────────────────────────────────────────────────────────
     elif data == "menu_main":
+        reset_state(user_id)
         await query.edit_message_text(
             t("welcome", lang),
             parse_mode=ParseMode.MARKDOWN,
@@ -90,21 +103,61 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── TOOLBOX ───────────────────────────────────────────────────────────
     elif data == "menu_toolbox":
+        reset_state(user_id)
         await query.edit_message_text(
             t("toolbox_header", lang),
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=toolbox_keyboard(lang),
         )
 
+    # ── TOOL ENTRY POINTS ─────────────────────────────────────────────────
+    elif data == "tool_voice":
+        await enter_voice(update)
+
+    elif data == "tool_video":
+        await enter_video(update)
+
+    elif data == "tool_automation":
+        await enter_automation(update)
+
+    elif data == "tool_content":
+        await enter_content(update)
+
+    elif data == "tool_funnel":
+        await enter_funnel(update)
+
+    elif data == "tool_post":
+        await enter_post(update)
+
+    # ── WORKFLOW CUSTOMIZE ENTRY ───────────────────────────────────────────
+    elif data.startswith("wf_customize_"):
+        wf_index = int(data.split("_")[2])
+        await enter_wf_customize(update, wf_index)
+
+    # ── AI TOOLS ENTRY POINTS ─────────────────────────────────────────────
+    elif data == "aitool_hooks":
+        await enter_hooks(update)
+
+    elif data == "aitool_ctas":
+        await enter_ctas(update)
+
+    elif data == "aitool_videos":
+        await enter_video_ideas(update)
+
+    elif data == "aitool_funnel":
+        await enter_funnel_ideas(update)
+
     # ── WORKFLOWS ─────────────────────────────────────────────────────────
     elif data == "menu_workflows":
+        reset_state(user_id)
         await query.edit_message_text(
             t("workflows_header", lang),
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=workflows_list_keyboard(lang),
         )
 
-    elif data.startswith("workflow_") and not data.startswith("workflow_c"):
+    elif data.startswith("workflow_"):
+        reset_state(user_id)
         index = int(data.split("_")[1])
         wf = ACTION_WORKFLOWS[index]
         template = wf["template_ru"] if lang == "ru" else wf["template_en"]
@@ -116,6 +169,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── TEMPLATES ─────────────────────────────────────────────────────────
     elif data == "menu_templates":
+        reset_state(user_id)
         await query.edit_message_text(
             t("templates_header", lang),
             parse_mode=ParseMode.MARKDOWN,
@@ -154,6 +208,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── RESULTS ───────────────────────────────────────────────────────────
     elif data == "menu_results":
+        reset_state(user_id)
         await query.edit_message_text(
             t("results_header", lang),
             parse_mode=ParseMode.MARKDOWN,
@@ -170,8 +225,9 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=result_detail_keyboard(index, lang),
         )
 
-    # ── AI TOOLS ──────────────────────────────────────────────────────────
+    # ── AI TOOLS MENU ─────────────────────────────────────────────────────
     elif data == "menu_ai_tools":
+        reset_state(user_id)
         await query.edit_message_text(
             t("ai_tools_header", lang),
             parse_mode=ParseMode.MARKDOWN,
@@ -215,6 +271,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # ── LESSONS ───────────────────────────────────────────────────────────
     elif data == "menu_lessons":
+        reset_state(user_id)
         await query.edit_message_text(
             t("lessons_header", lang),
             parse_mode=ParseMode.MARKDOWN,

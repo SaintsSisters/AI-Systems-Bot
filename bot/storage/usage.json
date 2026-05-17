@@ -1,11 +1,11 @@
 {
   "7699171398": {
     "actions": {
-      "start": 2,
+      "start": 6,
       "menu_ai_tools": 1,
-      "menu_main": 8,
-      "menu_workflows": 4,
-      "workflow_0": 2,
+      "menu_main": 10,
+      "menu_workflows": 8,
+      "workflow_0": 3,
       "workflow_2": 1,
       "workflow_1": 2,
       "menu_lessons": 1,
@@ -20,13 +20,14 @@
       "experiment_5": 1,
       "menu_templates": 1,
       "template_cat_0": 1,
-      "menu_toolbox": 3,
+      "menu_toolbox": 4,
       "toolbox_cat_0": 1,
       "toolbox_cat_6": 1,
-      "menu_drop_settings": 1
+      "menu_drop_settings": 1,
+      "toggle_lang": 1
     },
-    "total": 43,
+    "total": 56,
     "first_seen": "2026-05-17T17:43:15.097664",
-    "last_seen": "2026-05-17T18:04:03.967564"
+    "last_seen": "2026-05-17T18:11:10.139778"
   }
 }

@@ -1,12 +1,12 @@
 import logging
 import os
 import warnings
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 warnings.filterwarnings("ignore", category=UserWarning, module="telegram")
 
 from bot.handlers.menu import start, handle_callback
-from bot.handlers.ai_tools import get_all_conversations
+from bot.handlers.ai_tools import route_message
 from bot.services.scheduler import register_daily_drop_job
 
 logging.basicConfig(
@@ -31,12 +31,15 @@ def main() -> None:
         .build()
     )
 
-    for conv in get_all_conversations():
-        app.add_handler(conv)
-
+    # Commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", start))
+
+    # All inline button callbacks
     app.add_handler(CallbackQueryHandler(handle_callback))
+
+    # Global text message router — dispatches based on persisted user state
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_message))
 
     logger.info("AI Systems Hub — Execution Engine starting...")
     app.run_polling(allowed_updates=["message", "callback_query"])
